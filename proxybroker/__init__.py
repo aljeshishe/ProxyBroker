@@ -53,3 +53,4 @@ __all__ = (
     ProxyPool,
     Broker,
 )
+print('GRACHEV TEST')
