@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from asyncio.selector_events import _SelectorTransport
 
 __title__ = 'ProxyBroker'
 __package__ = 'proxybroker'
@@ -44,6 +45,17 @@ warnings.simplefilter('always', UserWarning)
 warnings.simplefilter('once', DeprecationWarning)
 
 
+# _SelectorTransport.__del__ closes transport. This leads to exception
+# OSError: [WinError 10038] An operation was attempted on something that is not a socket
+# so don't close transport
+def _del(self):
+    if self._sock is not None:
+        warnings.warn("unclosed transport %r. Ignoring" % self, ResourceWarning,
+                      source=self)
+
+
+_SelectorTransport.__del__ = _del
+
 __all__ = (
     Proxy,
     Judge,
@@ -53,4 +65,3 @@ __all__ = (
     ProxyPool,
     Broker,
 )
-print('GRACHEV TEST')
