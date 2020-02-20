@@ -18,7 +18,7 @@ from .providers import Provider, PROVIDERS
 GRAB_PAUSE = 180
 
 # The maximum number of providers that are parsed concurrently
-MAX_CONCURRENT_PROVIDERS = 3
+MAX_CONCURRENT_PROVIDERS = 10
 
 
 class Broker:
@@ -89,12 +89,12 @@ class Broker:
         self._providers = [p if isinstance(p, Provider) else Provider(p)
                            for p in (providers or PROVIDERS)]
 
-        try:
-            self._loop.add_signal_handler(signal.SIGINT, self.stop)
-            # add_signal_handler() is not implemented on Win
-            # https://docs.python.org/3.5/library/asyncio-eventloops.html#windows
-        except NotImplementedError:
-            pass
+        # try:
+        #     self._loop.add_signal_handler(signal.SIGINT, self.stop)
+        #     # add_signal_handler() is not implemented on Win
+        #     # https://docs.python.org/3.5/library/asyncio-eventloops.html#windows
+        # except NotImplementedError:
+        #     pass
 
     async def grab(self, *, countries=None, limit=0):
         """Gather proxies from the providers without checking.
