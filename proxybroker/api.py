@@ -1,5 +1,5 @@
 import io
-import signal
+# import signal
 import asyncio
 import warnings
 from pprint import pprint

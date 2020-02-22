@@ -338,7 +338,7 @@ class Proxy:
             msg = 'Received: timeout'
             err = ProxyTimeoutError(msg)
             raise err
-        except (ConnectionResetError, OSError) as e:
+        except (ConnectionResetError, OSError):
             msg = 'Received: failed'  # (connection is reset by the peer)
             err = ProxyRecvError(msg)
             raise err

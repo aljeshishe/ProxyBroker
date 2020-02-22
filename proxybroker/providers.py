@@ -647,8 +647,8 @@ PROVIDERS = [
     Blogspot_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 24800
     Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),                             # noqa; 30
     Blogspot_com_socks(proto=('SOCKS4', 'SOCKS5')),                                # noqa; 1486
-    #Tools_rosinstrument_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # noqa; 4000
-    #Tools_rosinstrument_com_socks(proto=('SOCKS4', 'SOCKS5')),                     # noqa; 1800
+    # Tools_rosinstrument_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # noqa; 4000
+    # Tools_rosinstrument_com_socks(proto=('SOCKS4', 'SOCKS5')),                     # noqa; 1800
     My_proxy_com(max_conn=2),                                                      # noqa; 1000
     Checkerproxy_net(),                                                            # noqa; 60000
     Aliveproxy_com(),                                                              # noqa; 210
