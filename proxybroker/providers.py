@@ -180,7 +180,9 @@ class Blogspot_com_base(Provider):
 class Blogspot_com(Blogspot_com_base):
     domain = 'blogspot.com'
     domains = ['sslproxies24.blogspot.com', 'proxyserverlist-24.blogspot.com',
-               'freeschoolproxy.blogspot.com', 'googleproxies24.blogspot.com']
+               'freeschoolproxy.blogspot.com',
+               # 'googleproxies24.blogspot.com'
+               ]
 
 
 class Blogspot_com_socks(Blogspot_com_base):
@@ -626,8 +628,8 @@ PROVIDERS = [
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
     Provider(url='http://cn-proxy.com/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 70
-    Provider(url='https://hugeproxies.com/home/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 800
+    # Provider(url='https://hugeproxies.com/home/',
+    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 800
     Provider(url='http://proxy.rufey.ru/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 153
     Provider(url='https://geekelectronics.org/my-servisy/proxy',
