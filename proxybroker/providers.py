@@ -132,7 +132,7 @@ class Provider:
                     page = await resp.text()
                     if resp.status != 200:
                         log.debug(
-                            'url: %s\nheaders: %s\ncookies: %s\npage:\n%s' % (
+                            'url: %s\nheaders: %s\ncookies: %s\npage:\n%.1000s' % (
                                 url, resp.headers, resp.cookies, page))
                         raise BadStatusError('Status: %s' % resp.status)
         except (UnicodeDecodeError, BadStatusError, asyncio.TimeoutError,

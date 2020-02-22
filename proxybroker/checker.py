@@ -231,7 +231,7 @@ async def _send_test_request(method, proxy, judge):
         raise err
     finally:
         proxy.log('Get: %s' % ('success' if content else 'failed'), err=err)
-        log.debug('{h}:{p} [{n}]: ({j}) rv: {rv}, response: {resp}'.format(
+        log.debug('{h}:{p} [{n}]: ({j}) rv: {rv}, response: {resp:.1000s}'.format(
             h=proxy.host, p=proxy.port, n=proxy.ngtr.name, j=judge.url,
             rv=rv, resp=resp))
     return headers, content, rv
