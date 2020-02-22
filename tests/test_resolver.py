@@ -40,8 +40,8 @@ async def test_get_real_ext_ip(event_loop, mocker, resolver):
         resp.text.side_effect = side_effect
         return resp
 
-    with mocker.patch('aiohttp.client.ClientSession._request', side_effect=f):
-        assert await resolver.get_real_ext_ip() == '127.0.0.1'
+    mocker.patch('aiohttp.client.ClientSession._request', side_effect=f)
+    assert await resolver.get_real_ext_ip() == '127.0.0.1'
 
 
 @pytest.mark.asyncio
@@ -52,19 +52,19 @@ async def test_resolve(event_loop, mocker, resolver):
         await resolver.resolve('256.0.0.1')
 
     f = future_iter([ResolveResult('127.0.0.1', 0)])
-    with mocker.patch('aiodns.DNSResolver.query', side_effect=f):
-        assert await resolver.resolve('test.com') == '127.0.0.1'
+    mocker.patch('aiodns.DNSResolver.query', side_effect=f)
+    assert await resolver.resolve('test.com') == '127.0.0.1'
 
 
 @pytest.mark.asyncio
 async def test_resolve_family(mocker, resolver):
     f = future_iter([ResolveResult('127.0.0.2', 0)])
-    with mocker.patch('aiodns.DNSResolver.query', side_effect=f):
-        resp = [{'hostname': 'test2.com', 'host': '127.0.0.2', 'port': 80,
-                 'family': socket.AF_INET, 'proto': socket.IPPROTO_IP,
-                 'flags': socket.AI_NUMERICHOST}]
-        resolved = await resolver.resolve('test2.com', family=socket.AF_INET)
-        assert resolved == resp
+    mocker.patch('aiodns.DNSResolver.query', side_effect=f)
+    resp = [{'hostname': 'test2.com', 'host': '127.0.0.2', 'port': 80,
+             'family': socket.AF_INET, 'proto': socket.IPPROTO_IP,
+             'flags': socket.AI_NUMERICHOST}]
+    resolved = await resolver.resolve('test2.com', family=socket.AF_INET)
+    assert resolved == resp
 
 
 @pytest.mark.asyncio
@@ -77,9 +77,9 @@ async def test_resolve_cache(event_loop, mocker, resolver):
     f = future_iter([ResolveResult('127.0.0.1', 0)],
                     [ResolveResult('127.0.0.2', 0)],
                     [Exception])
-    with mocker.patch('aiodns.DNSResolver.query', side_effect=f):
-        await resolver.resolve('test.com')
-        await resolver.resolve('test2.com', port=80, family=socket.AF_INET)
+    mocker.patch('aiodns.DNSResolver.query', side_effect=f)
+    await resolver.resolve('test.com')
+    await resolver.resolve('test2.com', port=80, family=socket.AF_INET)
     assert resolver._resolve.call_count == 2
 
     assert await resolver.resolve('test.com') == '127.0.0.1'
@@ -87,7 +87,7 @@ async def test_resolve_cache(event_loop, mocker, resolver):
     assert resp[0]['host'] == '127.0.0.2'
     assert resolver._resolve.call_count == 2
 
-    with mocker.patch('aiodns.DNSResolver.query', side_effect=f),\
-            pytest.raises(Exception):
-            await resolver.resolve('test3.com')
+    with pytest.raises(Exception):
+        mocker.patch('aiodns.DNSResolver.query', side_effect=f)
+        await resolver.resolve('test3.com')
     assert resolver._resolve.call_count == 3

@@ -30,23 +30,23 @@ async def test_create_by_ip():
 @pytest.mark.asyncio
 async def test_create_by_domain(mocker):
     f = future_iter([ResolveResult('127.0.0.1', 0)])
-    with mocker.patch('aiodns.DNSResolver.query', side_effect=f):
-        proxy = await Proxy.create('testhost.com', '80')
-        assert proxy.host == '127.0.0.1'
+    mocker.patch('aiodns.DNSResolver.query', side_effect=f)
+    proxy = await Proxy.create('testhost.com', '80')
+    assert proxy.host == '127.0.0.1'
 
 
 def test_repr():
     p = Proxy('8.8.8.8', '80')
     p._runtimes = [1, 3, 3]
     p.types.update({'HTTP': 'Anonymous', 'HTTPS': None})
-    assert repr(p) == '<Proxy US 2.33s [HTTP: Anonymous, HTTPS] 8.8.8.8:80>'
+    assert repr(p) == '<Proxy geo:US avg:2.33s err:0 req:3 [HTTP: Anonymous, HTTPS] 8.8.8.8:80>'
 
     p = Proxy('4.4.4.4', '8080')
     p.types.update({'SOCKS4': None, 'SOCKS5': None})
-    assert repr(p) == '<Proxy US 0.00s [SOCKS4, SOCKS5] 4.4.4.4:8080>'
+    assert repr(p) == '<Proxy geo:US avg:0.00s err:0 req:0 [SOCKS4, SOCKS5] 4.4.4.4:8080>'
 
     p = Proxy('127.0.0.1', '3128')
-    assert repr(p) == '<Proxy -- 0.00s [] 127.0.0.1:3128>'
+    assert repr(p) == '<Proxy geo:-- avg:0.00s err:0 req:0 [] 127.0.0.1:3128>'
 
 
 def test_as_json_w_geo():
