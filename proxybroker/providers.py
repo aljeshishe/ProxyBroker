@@ -34,7 +34,7 @@ class Provider:
     _pattern = IPPortPatternGlobal
 
     def __init__(self, url=None, proto=(), max_conn=4,
-                 max_tries=3, timeout=20, loop=None):
+                 max_tries=3, timeout=20):
         if url:
             self.domain = urlparse(url).netloc
         self.url = url
@@ -46,7 +46,6 @@ class Provider:
         self._proxies = set()
         # concurrent connections on the current provider
         self._sem_provider = asyncio.Semaphore(max_conn)
-        self._loop = loop or asyncio.get_event_loop()
 
     @property
     def proxies(self):
@@ -76,8 +75,7 @@ class Provider:
         log.debug('Try to get proxies from %s' % self.domain)
 
         async with aiohttp.ClientSession(headers=get_headers(),
-                                         cookies=self._cookies,
-                                         loop=self._loop) as self._session:
+                                         cookies=self._cookies) as self._session:
             await self._pipe()
 
         log.debug('%d proxies received from %s: %s' % (
@@ -125,8 +123,7 @@ class Provider:
     async def _get(self, url, data=None, headers=None, method='GET'):
         page = ''
         try:
-            with (await self._sem_provider),\
-                    async_timeout.timeout(self._timeout, loop=self._loop):
+            async with self._sem_provider, async_timeout.timeout(self._timeout):
                 async with self._session.request(
                         method, url, data=data, headers=headers) as resp:
                     page = await resp.text()
@@ -605,7 +602,8 @@ class ProxyProvider(Provider):
         super().__init__(*args, **kwargs)
 
 
-PROVIDERS = [
+def get_providers():
+    PROVIDERS = [
     Provider(url='http://www.proxylists.net/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 49
     Provider(url='http://ipaddress.com/proxy-list/',
@@ -676,4 +674,5 @@ PROVIDERS = [
     # Proxynova_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')), # 818
     # _50kproxies_com(),  # 822
     # Free_proxy_cz(),  # 420
-]
+    ]
+    return PROVIDERS

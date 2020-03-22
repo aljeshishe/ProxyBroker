@@ -334,11 +334,11 @@ def cli(args=sys.argv[1:]):
         ns.types.append(('HTTP', ns.anon_lvl))
 
     loop = asyncio.get_event_loop()
-    proxies = asyncio.Queue(loop=loop)
+    proxies = asyncio.Queue()
     broker = Broker(
         proxies, max_conn=ns.max_conn, max_tries=ns.max_tries,
         timeout=ns.timeout, judges=ns.judges, providers=ns.providers,
-        verify_ssl=ns.verify_ssl, loop=loop)
+        verify_ssl=ns.verify_ssl)
 
     if ns.command in ('find', 'grab'):
         tasks = [handle(proxies, outfile=ns.outfile, format=ns.format)]

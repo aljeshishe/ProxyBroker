@@ -32,18 +32,19 @@ from .providers import Provider  # noqa
 from .checker import Checker  # noqa
 from .server import Server, ProxyPool  # noqa
 from .api import Broker  # noqa
-
-
+from .requests import Requests
+#
 import logging  # noqa
 import warnings  # noqa
 
 
 logger = logging.getLogger('asyncio')
-logger.addFilter(logging.Filter('has no effect when using ssl'))
-
+logger.setLevel(logging.INFO)
+# logger.addFilter(logging.Filter('has no effect when using ssl'))
+# disabled because hides "Task exception was never retrieved" message
 warnings.simplefilter('always', UserWarning)
 warnings.simplefilter('once', DeprecationWarning)
-
+#
 
 # _SelectorTransport.__del__ closes transport. This leads to exception
 # OSError: [WinError 10038] An operation was attempted on something that is not a socket
@@ -64,4 +65,5 @@ __all__ = (
     Server,
     ProxyPool,
     Broker,
+    Requests
 )

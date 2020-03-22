@@ -38,10 +38,9 @@ class Resolver:
         'http://ifconfig.io/ip',
     ]
 
-    def __init__(self, timeout=5, loop=None):
+    def __init__(self, timeout=5):
         self._timeout = timeout
-        self._loop = loop or asyncio.get_event_loop()
-        self._resolver = aiodns.DNSResolver(loop=self._loop)
+        self._resolver = aiodns.DNSResolver()
 
     @staticmethod
     def host_is_ip(host):
@@ -94,9 +93,9 @@ class Resolver:
         """Return real external IP address."""
         while self._ip_hosts:
             try:
-                with async_timeout.timeout(self._timeout, loop=self._loop):
+                with async_timeout.timeout(self._timeout):
                     async with \
-                        aiohttp.ClientSession(loop=self._loop) as session,\
+                        aiohttp.ClientSession() as session,\
                             session.get(self._pop_random_ip_host()) as resp:
                         ip = await resp.text()
             except asyncio.TimeoutError:

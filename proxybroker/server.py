@@ -4,7 +4,7 @@ import asyncio
 
 from .errors import (
     BadStatusError, BadStatusLine, BadResponseError, ErrorOnStream,
-    NoProxyError, ProxyConnError, ProxyEmptyRecvError, ProxyRecvError,
+    NoProxyError, ProxyConnError, ProxyEmptyResponseError, ProxyRecvError,
     ProxySendError, ProxyTimeoutError, ResolveError)
 from .utils import log, parse_headers, parse_status_line
 from .resolver import Resolver
@@ -64,10 +64,9 @@ class Server:
     def __init__(self, host, port, proxies, timeout=8, max_tries=3,
                  min_req_proxy=5, max_error_rate=0.5, max_resp_time=8,
                  prefer_connect=False, http_allowed_codes=None,
-                 backlog=100, loop=None, **kwargs):
+                 backlog=100, **kwargs):
         self.host = host
         self.port = int(port)
-        self._loop = loop or asyncio.get_event_loop()
         self._timeout = timeout
         self._max_tries = max_tries
         self._backlog = backlog
@@ -77,13 +76,13 @@ class Server:
         self._connections = {}
         self._proxy_pool = ProxyPool(
             proxies, min_req_proxy, max_error_rate, max_resp_time)
-        self._resolver = Resolver(loop=self._loop)
+        self._resolver = Resolver()
         self._http_allowed_codes = http_allowed_codes or []
 
     def start(self):
         srv = asyncio.start_server(
             self._accept, host=self.host, port=self.port,
-            backlog=self._backlog, loop=self._loop)
+            backlog=self._backlog)
         self._server = self._loop.run_until_complete(srv)
 
         log.info('Listening established on {0}'.format(
@@ -166,12 +165,12 @@ class Server:
                     asyncio.ensure_future(self._stream(
                         reader=proxy.reader, writer=client_writer,
                         scheme=scheme))]
-                await asyncio.gather(*stream, loop=self._loop)
+                await asyncio.gather(*stream)
             except asyncio.CancelledError:
                 log.debug('Cancelled in server._handle')
                 break
             except (ProxyTimeoutError, ProxyConnError, ProxyRecvError,
-                    ProxySendError, ProxyEmptyRecvError, BadStatusError,
+                    ProxySendError, ProxyEmptyResponseError, BadStatusError,
                     BadResponseError) as e:
                 log.debug('client: %d; error: %r' % (client, e))
                 continue

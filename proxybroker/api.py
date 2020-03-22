@@ -12,7 +12,7 @@ from .server import Server
 from .checker import Checker
 from .utils import log, IPPortPatternLine
 from .resolver import Resolver
-from .providers import Provider, PROVIDERS
+from .providers import Provider, get_providers
 
 # Pause between grabbing cycles; in seconds.
 GRAB_PAUSE = 180
@@ -42,7 +42,6 @@ class Broker:
     :param bool verify_ssl:
         (optional) Flag indicating whether to check the SSL certificates.
         Set to True to check ssl certifications
-    :param loop: (optional) asyncio compatible event loop
 
     .. deprecated:: 0.2.0
         Use :attr:`max_conn` and :attr:`max_tries` instead of
@@ -50,11 +49,9 @@ class Broker:
     """
 
     def __init__(self, queue=None, timeout=8, max_conn=200, max_tries=3,
-                 judges=None, providers=None, verify_ssl=False, loop=None,
-                 **kwargs):
-        self._loop = loop or asyncio.get_event_loop()
-        self._proxies = queue or asyncio.Queue(loop=self._loop)
-        self._resolver = Resolver(loop=self._loop)
+                 judges=None, providers=None, verify_ssl=False, **kwargs):
+        self._proxies = queue or asyncio.Queue()
+        self._resolver = Resolver()
         self._timeout = timeout
         self._verify_ssl = verify_ssl
 
@@ -83,11 +80,11 @@ class Broker:
             max_tries = attempts_conn
 
         # The maximum number of concurrent checking proxies
-        self._on_check = asyncio.Queue(maxsize=max_conn, loop=self._loop)
+        self._on_check = asyncio.Queue(maxsize=max_conn)
         self._max_tries = max_tries
         self._judges = judges
         self._providers = [p if isinstance(p, Provider) else Provider(p)
-                           for p in (providers or PROVIDERS)]
+                           for p in (providers or get_providers())]
 
         # try:
         #     self._loop.add_signal_handler(signal.SIGINT, self.stop)
@@ -96,22 +93,27 @@ class Broker:
         # except NotImplementedError:
         #     pass
 
-    async def grab(self, *, countries=None, limit=0):
-        """Gather proxies from the providers without checking.
-
-        :param list countries: (optional) List of ISO country codes
-                               where should be located proxies
-        :param int limit: (optional) The maximum number of proxies
-
-        :ref:`Example of usage <proxybroker-examples-grab>`.
-        """
-        self._countries = countries
-        self._limit = limit
-        task = asyncio.ensure_future(self._grab(check=False))
-        self._all_tasks.append(task)
+    # async def grab(self, *, types=None, countries=None, limit=0):
+    #     """Gather proxies from the providers without checking.
+    #
+    #     :param list types:
+    #         Types (protocols) that need to be check on support by proxy.
+    #         Supported: HTTP, HTTPS, SOCKS4, SOCKS5, CONNECT:80, CONNECT:25
+    #         And levels of anonymity (HTTP only): Transparent, Anonymous, High
+    #     :param list countries: (optional) List of ISO country codes
+    #                            where should be located proxies
+    #     :param int limit: (optional) The maximum number of proxies
+    #
+    #     :ref:`Example of usage <proxybroker-examples-grab>`.
+    #     """
+    #     self._countries = countries
+    #     self._limit = limit
+    #     types = _update_types(types)
+    #     task = asyncio.ensure_future(self._grab(types=types, check=False))
+    #     self._all_tasks.append(task)
 
     async def find(self, *, types=None, data=None, countries=None,
-                   post=False, strict=False, dnsbl=None, limit=0, **kwargs):
+                   post=False, strict=False, dnsbl=None, limit=0, check=True, **kwargs):
         """Gather and check proxies from providers or from a passed data.
 
         :ref:`Example of usage <proxybroker-examples-find>`.
@@ -157,17 +159,16 @@ class Broker:
             judges=self._judges, timeout=self._timeout,
             verify_ssl=self._verify_ssl, max_tries=self._max_tries,
             real_ext_ip=ip, types=types, post=post,
-            strict=strict, dnsbl=dnsbl, loop=self._loop)
+            strict=strict, dnsbl=dnsbl)
         self._countries = countries
         self._limit = limit
 
-        tasks = [asyncio.ensure_future(self._checker.check_judges())]
+        await self._checker.check_judges()
         if data:
-            task = asyncio.ensure_future(self._load(data, check=True))
+            task = asyncio.ensure_future(self._load(data, check=check))
         else:
-            task = asyncio.ensure_future(self._grab(types, check=True))
-        tasks.append(task)
-        self._all_tasks.extend(tasks)
+            task = asyncio.ensure_future(self._grab(types, check=check))
+        self._all_tasks.append(task)
 
     def serve(self, host='127.0.0.1', port=8888, limit=100, **kwargs):
         """Start a local proxy server.
@@ -244,8 +245,7 @@ class Broker:
 
         self._server = Server(
             host=host, port=port, proxies=self._proxies, timeout=self._timeout,
-            max_tries=kwargs.pop('max_tries', self._max_tries),
-            loop=self._loop, **kwargs)
+            max_tries=kwargs.pop('max_tries', self._max_tries), **kwargs)
         self._server.start()
 
         task = asyncio.ensure_future(self.find(limit=limit, **kwargs))
@@ -273,8 +273,7 @@ class Broker:
             providers = [pr for pr in self._providers if not types or
                          not pr.proto or bool(pr.proto & types.keys())]
             while providers:
-                tasks = [asyncio.ensure_future(pr.get_proxies())
-                         for pr in providers[:by]]
+                tasks = [asyncio.ensure_future(pr.get_proxies()) for pr in providers[:by]]
                 del providers[:by]
                 self._all_tasks.extend(tasks)
                 yield tasks
@@ -282,9 +281,13 @@ class Broker:
         while True:
             for tasks in _get_tasks():
                 for task in asyncio.as_completed(tasks):
-                    proxies = await task
-                    for proxy in proxies:
-                        await self._handle(proxy, check=check)
+                    try:
+                        proxies = await task
+                        for proxy in proxies:
+                            await self._handle(proxy, check=check)
+                    except Exception as e:
+                        print(f'got exception in _grab: {e}')
+                        task.print_stack()
             log.debug('Grab cycle is complete')
             if self._server:
                 log.debug('fall asleep for %d seconds' % GRAB_PAUSE)
@@ -299,7 +302,7 @@ class Broker:
         try:
             proxy = await Proxy.create(
                 *proxy, timeout=self._timeout, resolver=self._resolver,
-                verify_ssl=self._verify_ssl, loop=self._loop)
+                verify_ssl=self._verify_ssl)
         except (ResolveError, ValueError):
             return
 
@@ -312,18 +315,19 @@ class Broker:
             self._push_to_result(proxy)
 
     def _is_unique(self, proxy):
-        if (proxy.host, proxy.port) not in self.unique_proxies:
-            self.unique_proxies[(proxy.host, proxy.port)] = proxy
-            return True
-        else:
+        if (proxy.host, proxy.port) in self.unique_proxies:
+            proxy.log('Proxy already processed(possibly from other provider)')
             return False
+
+        self.unique_proxies[(proxy.host, proxy.port)] = proxy
+        return True
 
     def _geo_passed(self, proxy):
         if self._countries and (proxy.geo.code not in self._countries):
             proxy.log('Location of proxy is outside the given countries list')
             return False
-        else:
-            return True
+
+        return True
 
     async def _push_to_check(self, proxy):
         def _task_done(proxy, f):
@@ -430,11 +434,7 @@ class Broker:
                                            key=lambda item: item[0]):
                     full_log.append('\t%s' % ngtr)
                     for event, runtime in events:
-                        if event.startswith('Initial connection'):
-                            full_log.append('\t\t-------------------')
-                        else:
-                            full_log.append('\t\t{:<66} Runtime: {:.2f}'
-                                            .format(event, runtime))
+                            full_log.append('\t\t{:<66} Runtime: {:.2f}'.format(event, runtime))
                 for row in full_log:
                     print(row)
             elif 'Connection: failed' in msgs:

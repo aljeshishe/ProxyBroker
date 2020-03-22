@@ -14,36 +14,36 @@ class ResolveError(Exception):
 
 
 class ProxyConnError(ProxyError):
-    errmsg = 'connection_failed'
+    pass
 
 
-class ProxyRecvError(ProxyError):
-    errmsg = 'connection_is_reset'
+class ProxyRecvError(ProxyError):  # connection_is_reset
+    pass
 
 
-class ProxySendError(ProxyError):
-    errmsg = 'connection_is_reset'
+class ProxySendError(ProxyError):  # connection_is_reset
+    pass
 
 
 class ProxyTimeoutError(ProxyError):
-    errmsg = 'connection_timeout'
+    pass
 
 
-class ProxyEmptyRecvError(ProxyError):
-    errmsg = 'empty_response'
+class ProxyEmptyResponseError(ProxyError):
+    pass
 
 
 class BadStatusError(Exception):  # BadStatusLine
-    errmsg = 'bad_status'
+    pass
 
 
 class BadResponseError(Exception):
-    errmsg = 'bad_response'
+    pass
 
 
 class BadStatusLine(Exception):
-    errmsg = 'bad_status_line'
+    pass
 
 
 class ErrorOnStream(Exception):
-    errmsg = 'error_on_stream'
+    pass

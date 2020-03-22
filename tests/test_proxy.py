@@ -175,7 +175,7 @@ def test_log(log):
     p.log(msg, stime, err)
     assert len(p.stat['errors']) == 1
     assert sum(p.stat['errors'].values()) == 2
-    assert p.stat['errors'][err.errmsg] == 2
+    assert p.stat['errors'][err] == 2
     assert round(p._runtimes[-1], 2) == 0.0
 
     len_runtimes = len(p._runtimes)

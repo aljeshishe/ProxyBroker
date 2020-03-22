@@ -5,12 +5,11 @@ import ssl as _ssl
 from collections import Counter
 
 from .errors import (
-    ProxyEmptyRecvError, ProxyConnError, ProxyRecvError,
+    ProxyEmptyResponseError, ProxyConnError, ProxyRecvError,
     ProxySendError, ProxyTimeoutError, ResolveError)
 from .utils import log, parse_headers
 from .resolver import Resolver
 from .negotiators import NGTRS
-
 
 _HTTP_PROTOS = {'HTTP', 'CONNECT:80', 'SOCKS4', 'SOCKS5'}
 _HTTPS_PROTOS = {'HTTPS', 'SOCKS4', 'SOCKS5'}
@@ -50,8 +49,7 @@ class Proxy:
         :raises ResolveError: If could not resolve the host
         :raises ValueError: If the port > 65535
         """
-        loop = kwargs.pop('loop', None)
-        resolver = kwargs.pop('resolver', Resolver(loop=loop))
+        resolver = kwargs.pop('resolver', Resolver())
         try:
             _host = await resolver.resolve(host)
             self = cls(_host, *args, **kwargs)
@@ -98,10 +96,10 @@ class Proxy:
             tpinfo.append(s)
         tpinfo = ', '.join(tpinfo)
         return '<Proxy geo:{code} avg:{avg:.2f}s err:{err} req:{req} [{types}] {host}:{port}>'.format(
-               code=self._geo.code, types=tpinfo, host=self.host,
-               port=self.port, avg=self.avg_resp_time,
-               err=sum(self.stat['errors'].values()),
-               req=len(self._runtimes))
+            code=self._geo.code, types=tpinfo, host=self.host,
+            port=self.port, avg=self.avg_resp_time,
+            err=sum(self.stat['errors'].values()),
+            req=len(self._runtimes))
 
     @property
     def types(self):
@@ -244,14 +242,17 @@ class Proxy:
 
     def log(self, msg, stime=0, err=None):
         ngtr = self.ngtr.name if self.ngtr else 'INFO'
-        runtime = time.time() - stime if stime else 0
-        log.debug('{h}:{p} [{n}]: {msg}; Runtime: {rt:.2f}'.format(
-            h=self.host, p=self.port, n=ngtr, msg=msg, rt=runtime))
+        runtime_str = ''
+        runtime = 0
+        if stime:
+            runtime = time.time() - stime
+            runtime_str = 'Runtime: {:.2f}'.format(runtime)
+        log.debug('{h}:{p} [{n}]: {msg}; {runtime}'.format(h=self.host, p=self.port, n=ngtr, msg=msg, runtime=runtime_str))
         trunc = '...' if len(msg) > 58 else ''
         msg = '{msg:.60s}{trunc}'.format(msg=msg, trunc=trunc)
         self._log.append((ngtr, msg, runtime))
         if err:
-            self.stat['errors'][err.errmsg] += 1
+            self.stat['errors'][err] += 1
         if runtime and 'timeout' not in msg:
             self._runtimes.append(runtime)
 
@@ -274,14 +275,12 @@ class Proxy:
             if ssl:
                 _type = 'ssl'
                 sock = self._writer['conn'].get_extra_info('socket')
-                params = {'ssl': self._ssl_context, 'sock': sock,
-                          'server_hostname': self.host}
+                params = {'ssl': self._ssl_context, 'sock': sock, 'server_hostname': self.host}
             else:
                 _type = 'conn'
                 params = {'host': self.host, 'port': self.port}
-            self._reader[_type], self._writer[_type] = \
-                await asyncio.wait_for(asyncio.open_connection(**params),
-                                       timeout=self._timeout)
+            self._reader[_type], self._writer[_type] = await asyncio.wait_for(asyncio.open_connection(**params),
+                                                                              timeout=self._timeout)
         except asyncio.TimeoutError:
             msg += 'Connection: timeout'
             err = ProxyTimeoutError(msg)
@@ -345,7 +344,7 @@ class Proxy:
         else:
             msg = 'Received: %s bytes' % len(resp)
             if not resp:
-                err = ProxyEmptyRecvError(msg)
+                err = ProxyEmptyResponseError(msg)
                 raise err
         finally:
             if resp:

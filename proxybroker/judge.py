@@ -15,10 +15,10 @@ class Judge:
     """Proxy Judge."""
 
     available = {'HTTP': [], 'HTTPS': [], 'SMTP': []}
-    ev = {'HTTP': asyncio.Event(), 'HTTPS': asyncio.Event(),
-          'SMTP': asyncio.Event()}
+    # ev = {'HTTP': asyncio.Event(), 'HTTPS': asyncio.Event(),
+    #       'SMTP': asyncio.Event()}
 
-    def __init__(self, url, timeout=8, verify_ssl=False, loop=None):
+    def __init__(self, url, timeout=8, verify_ssl=False):
         self.url = url
         self.scheme = urlparse(url).scheme.upper()
         self.host = urlparse(url).netloc
@@ -28,8 +28,7 @@ class Judge:
         self.marks = {'via': 0, 'proxy': 0}
         self.timeout = timeout
         self.verify_ssl = verify_ssl
-        self._loop = loop or asyncio.get_event_loop()
-        self._resolver = Resolver(loop=self._loop)
+        self._resolver = Resolver()
 
     def __repr__(self):
         return '<Judge [%s] %s>' % (self.scheme, self.host)
@@ -42,16 +41,16 @@ class Judge:
             scheme = 'SMTP'
         else:
             scheme = 'HTTP'
-        return random.choice(cls.available[scheme])
+        return cls.available[scheme]
 
     @classmethod
     def clear(cls):
         cls.available['HTTP'].clear()
         cls.available['HTTPS'].clear()
         cls.available['SMTP'].clear()
-        cls.ev['HTTP'].clear()
-        cls.ev['HTTPS'].clear()
-        cls.ev['SMTP'].clear()
+        # cls.ev['HTTP'].clear()
+        # cls.ev['HTTPS'].clear()
+        # cls.ev['SMTP'].clear()
 
     async def check(self, real_ext_ip):
         # TODO: need refactoring
@@ -63,19 +62,16 @@ class Judge:
         if self.scheme == 'SMTP':
             self.is_working = True
             self.available[self.scheme].append(self)
-            self.ev[self.scheme].set()
+            # self.ev[self.scheme].set()
             return
 
         page = False
         headers, rv = get_headers(rv=True)
-        connector = aiohttp.TCPConnector(
-            loop=self._loop, ssl=self.verify_ssl, force_close=True)
+        connector = aiohttp.TCPConnector(ssl=self.verify_ssl, force_close=True)
         try:
-            with async_timeout.timeout(self.timeout, loop=self._loop):
-                async with aiohttp.ClientSession(connector=connector,
-                                                 loop=self._loop) as session,\
-                        session.get(url=self.url, headers=headers,
-                                    allow_redirects=False) as resp:
+            with async_timeout.timeout(self.timeout):
+                async with aiohttp.ClientSession(connector=connector) as session,\
+                        session.get(url=self.url, headers=headers, allow_redirects=False) as resp:
                     page = await resp.text()
         except (asyncio.TimeoutError, aiohttp.ClientOSError,
                 aiohttp.ClientResponseError,
@@ -90,7 +86,7 @@ class Judge:
             self.marks['proxy'] = page.count('proxy')
             self.is_working = True
             self.available[self.scheme].append(self)
-            self.ev[self.scheme].set()
+            # self.ev[self.scheme].set()
             log.debug('%s is verified' % self)
         else:
             log.debug(('{j} is failed. HTTP status code: {code}; '
@@ -105,7 +101,8 @@ def get_judges(judges=None, timeout=8, verify_ssl=False):
         'http://httpbin.org/get?show_env',
         'smtp://smtp.gmail.com', 'smtp://aspmx.l.google.com',
         'http://azenv.net/', 'https://proxyjudge.info/',
-        'http://www.proxyfire.net/fastenv', 'http://proxyjudge.us/azenv.php',
+        # 'http://www.proxyfire.net/fastenv', not responding
+        'http://proxyjudge.us/azenv.php',
         'http://ip.spys.ru/', 'http://www.proxy-listen.de/azenv.php']
     _judges = []
     for j in judges:
