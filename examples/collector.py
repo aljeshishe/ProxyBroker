@@ -3,6 +3,7 @@
 import asyncio
 import json
 import pathlib
+import time
 import traceback
 from contextlib import closing
 from datetime import datetime
@@ -95,7 +96,7 @@ THREADS = 100
 name = 'results_{}'.format(datetime.now().strftime('%y_%m_%d__%H_%M_%S'))
 
 
-for i in range(3):
+for i in range(30):
     with closing(asyncio.new_event_loop()) as loop:
         asyncio.set_event_loop(loop)
 
@@ -117,4 +118,5 @@ for i in range(3):
             fp.flush()
 
         loop.stop()
+        time.sleep(3600)
 print('Finish')
