@@ -58,17 +58,17 @@ class Proxy:
             raise
         return self
 
-    def __init__(self, host=None, port=None, types=(),
-                 timeout=8, verify_ssl=False):
+    def __init__(self, host=None, port=None, provider=None, types=(), timeout=8, verify_ssl=False):
         self.host = host
         if not Resolver.host_is_ip(self.host):
             raise ValueError('The host of proxy should be the IP address. '
                              'Try Proxy.create() if the host is a domain')
 
-        self.port = int(port)
+        self.port = int(port) if port else 80
         if self.port > 65535:
             raise ValueError('The port of proxy cannot be greater than 65535')
 
+        self.provider = provider
         self.expected_types = set(types) & {'HTTP', 'HTTPS', 'CONNECT:80',
                                             'CONNECT:25', 'SOCKS4', 'SOCKS5'}
         self._timeout = timeout
@@ -95,11 +95,10 @@ class Proxy:
             s = s.format(tp=tp, lvl=lvl)
             tpinfo.append(s)
         tpinfo = ', '.join(tpinfo)
-        return '<Proxy geo:{code} avg:{avg:.2f}s err:{err} req:{req} [{types}] {host}:{port}>'.format(
-            code=self._geo.code, types=tpinfo, host=self.host,
-            port=self.port, avg=self.avg_resp_time,
-            err=sum(self.stat['errors'].values()),
-            req=len(self._runtimes))
+        errors = sum(self.stat['errors'].values())
+        requests = len(self._runtimes)
+        return f'<Proxy geo:{self._geo.code} avg:{self.avg_resp_time:.2f}s err:{errors} ' \
+               f'req:{requests} [{tpinfo}] {self.host}:{self.port} {self.provider}>'
 
     @property
     def types(self):

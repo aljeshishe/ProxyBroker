@@ -33,7 +33,7 @@ log_config = {
             'encoding': 'utf8',
         },
         'console_handler': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -50,6 +50,11 @@ log_config = {
             'propagate': False,
         },
         'requests': {
+            'handlers': ['file_handler', 'console_handler'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'chardet': {
             'handlers': ['file_handler', 'console_handler'],
             'level': 'INFO',
             'propagate': False,
@@ -88,6 +93,7 @@ lock = Lock()
 TRIES = 3
 THREADS = 100
 name = 'results_{}'.format(datetime.now().strftime('%y_%m_%d__%H_%M_%S'))
+
 
 for i in range(3):
     with closing(asyncio.new_event_loop()) as loop:

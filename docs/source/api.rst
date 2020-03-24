@@ -28,5 +28,5 @@ Provider
 --------
 
 .. autoclass:: proxybroker.providers.Provider
-    :members: proxies, get_proxies
+    :members: proxies, iter_proxies
     :member-order: groupwise

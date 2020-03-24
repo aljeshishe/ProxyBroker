@@ -6,6 +6,8 @@ from pprint import pprint
 from functools import partial
 from collections import defaultdict, Counter
 
+import aiostream
+
 from .errors import ResolveError
 from .proxy import Proxy
 from .server import Server
@@ -48,7 +50,7 @@ class Broker:
         :attr:`max_concurrent_conn` and :attr:`attempts_conn`.
     """
 
-    def __init__(self, queue=None, timeout=8, max_conn=200, max_tries=3,
+    def __init__(self, queue=None, timeout=8, max_conn=200, max_tries=2,
                  judges=None, providers=None, verify_ssl=False, **kwargs):
         self._proxies = queue or asyncio.Queue()
         self._resolver = Resolver()
@@ -74,9 +76,7 @@ class Broker:
 
         attempts_conn = kwargs.get('attempts_conn')
         if attempts_conn:
-            warnings.warn(
-                '`attempts_conn` is deprecated, use `max_tries` instead',
-                DeprecationWarning)
+            warnings.warn('`attempts_conn` is deprecated, use `max_tries` instead', DeprecationWarning)
             max_tries = attempts_conn
 
         # The maximum number of concurrent checking proxies
@@ -165,10 +165,9 @@ class Broker:
 
         await self._checker.check_judges()
         if data:
-            task = asyncio.ensure_future(self._load(data, check=check))
+            await asyncio.ensure_future(self._load(data, check=check))
         else:
-            task = asyncio.ensure_future(self._grab(types, check=check))
-        self._all_tasks.append(task)
+            await asyncio.ensure_future(self._grab(types, check=check))
 
     def serve(self, host='127.0.0.1', port=8888, limit=100, **kwargs):
         """Start a local proxy server.
@@ -269,50 +268,41 @@ class Broker:
         self._done()
 
     async def _grab(self, types=None, check=False):
-        def _get_tasks(by=MAX_CONCURRENT_PROVIDERS):
-            providers = [pr for pr in self._providers if not types or
-                         not pr.proto or bool(pr.proto & types.keys())]
-            while providers:
-                tasks = [asyncio.ensure_future(pr.get_proxies()) for pr in providers[:by]]
-                del providers[:by]
-                self._all_tasks.extend(tasks)
-                yield tasks
-        log.debug('Start grabbing proxies')
-        while True:
-            for tasks in _get_tasks():
-                for task in asyncio.as_completed(tasks):
-                    try:
-                        proxies = await task
+        try:
+            while True:
+                log.debug('Start grabbing proxies')
+                generators = [pr.iter_proxies() for pr in self._providers if not types or not pr.proto or bool(pr.proto & types.keys())]
+                combine = aiostream.stream.merge(*generators)
+                async with combine.stream() as streamer:
+                    async for proxies in streamer:
                         for proxy in proxies:
                             await self._handle(proxy, check=check)
-                    except Exception as e:
-                        print(f'got exception in _grab: {e}')
-                        task.print_stack()
-            log.debug('Grab cycle is complete')
-            if self._server:
-                log.debug('fall asleep for %d seconds' % GRAB_PAUSE)
-                await asyncio.sleep(GRAB_PAUSE)
-                log.debug('awaked')
-            else:
-                break
-        await self._on_check.join()
-        self._done()
+                    if self._server:
+                        log.debug('fall asleep for %d seconds' % GRAB_PAUSE)
+                        await asyncio.sleep(GRAB_PAUSE)
+                        log.debug('awaked')
+                    else:
+                        break
+            await self._on_check.join()
+            self._done()
+        except Exception as e:
+            log.exception('Exception while grabbing proxies')
+            raise
 
     async def _handle(self, proxy, check=False):
         try:
-            proxy = await Proxy.create(
-                *proxy, timeout=self._timeout, resolver=self._resolver,
-                verify_ssl=self._verify_ssl)
-        except (ResolveError, ValueError):
-            return
+            proxy = Proxy(*proxy, timeout=self._timeout, verify_ssl=self._verify_ssl)
 
-        if not self._is_unique(proxy) or not self._geo_passed(proxy):
-            return
+            if not self._is_unique(proxy) or not self._geo_passed(proxy):
+                return
 
-        if check:
-            await self._push_to_check(proxy)
-        else:
-            self._push_to_result(proxy)
+            if check:
+                await self._push_to_check(proxy)
+            else:
+                self._push_to_result(proxy)
+
+        except Exception as e:
+            log.exception(f'Exception while checking proxy {proxy}')
 
     def _is_unique(self, proxy):
         if (proxy.host, proxy.port) in self.unique_proxies:
