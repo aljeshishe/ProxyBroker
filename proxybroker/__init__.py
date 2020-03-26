@@ -32,7 +32,7 @@ from .providers import Provider  # noqa
 from .checker import Checker  # noqa
 from .server import Server, ProxyPool  # noqa
 from .api import Broker  # noqa
-from .requests import Requests
+# from .requests import Requests
 #
 import logging  # noqa
 import warnings  # noqa
