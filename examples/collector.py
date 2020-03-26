@@ -134,7 +134,7 @@ def collect():
                 #random.seed()
                 #random.shuffle(broker._providers)
                 tasks = asyncio.gather(broker.find(types=[('HTTP', ('Anonymous', 'High'))],
-                                                   limit=300,
+                                                   limit=0,
                                                    check=True),
                                        show(queue))
                 loop.run_until_complete(tasks)
