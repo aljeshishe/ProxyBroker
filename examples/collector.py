@@ -176,7 +176,7 @@ def hello():
 
 log.info('Started')
 
-server = MyWSGIRefServer(host='localhost', port=38080)
+server = MyWSGIRefServer(host='0.0.0.0', port=38080)
 
 t = threading.Thread(target=lambda: app.run(server=server))
 t.start()
