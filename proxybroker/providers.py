@@ -1,6 +1,7 @@
 import asyncio
 import re
 import warnings
+from contextlib import suppress
 from math import sqrt
 from html import unescape
 from base64 import b64decode
@@ -57,7 +58,8 @@ class Provider:
         async with aiohttp.ClientSession(headers=get_headers(),
                                          cookies=self._cookies) as self._session:
             async for proxies in self._pipe():
-                yield [(*p, str(self)) for p in proxies]
+                with suppress(Exception):
+                    yield [(*p, str(self)) for p in proxies]
         log.info(f'{self} finished crawling proxies')
 
     async def _pipe(self):

@@ -63,7 +63,7 @@ class Broker:
         self._server = None
         self._limit = 0  # not limited
         self._countries = None
-
+        self._stopped = False
         max_concurrent_conn = kwargs.get('max_concurrent_conn')
         if max_concurrent_conn:
             warnings.warn(
@@ -277,6 +277,8 @@ class Broker:
                     async for proxies in streamer:
                         for proxy in proxies:
                             await self._handle(proxy, check=check)
+                            if self._stopped:
+                                return
                     if self._server:
                         log.debug('fall asleep for %d seconds' % GRAB_PAUSE)
                         await asyncio.sleep(GRAB_PAUSE)
@@ -367,6 +369,7 @@ class Broker:
             if not task.done():
                 task.cancel()
         self._push_to_result(None)
+        self._stopped = True
         log.info('Done! Total found proxies: %d' % len(self.unique_proxies))
 
     def show_stats(self, verbose=False, **kwargs):

@@ -3,14 +3,17 @@
 import asyncio
 import json
 import pathlib
+import threading
 import time
 import traceback
-from contextlib import closing
+from _signal import SIGINT, SIGTERM
+from collections import deque
+from contextlib import closing, contextmanager
 from datetime import datetime
 from queue import Queue
 from threading import Thread, Lock
 import logging.config
-import requests
+
 
 import proxybroker
 import logging
@@ -76,47 +79,108 @@ pathlib.Path('logs').mkdir(parents=True, exist_ok=True)
 logging.config.dictConfig(log_config)
 log = logging.getLogger(__name__)
 
-proxies2 = []
-async def show(proxies):
+@contextmanager
+def context(verbose=True, message='', **kwargs):
+    kwargs_str = ' '.join(map(lambda i: f'{i[0]}={i[1]}', kwargs.items()))
+    if verbose:
+        log.info(f'{message} {kwargs_str}')
+    try:
+        yield None
+        if verbose:
+            log.info(f'Finished {message} {kwargs_str}')
+    except Exception as e:
+        log.exception(f'Exception while {message} {kwargs_str}')
+
+
+class FifoQueue(Queue):
+
+    def all(self):
+        with self.mutex:
+            return self.queue
+
+    def enable_limit(self):
+        with self.mutex:
+            self.queue = deque(self.queue, maxlen=len(self.queue))
+
+proxies = FifoQueue()
+
+
+def collect():
+
+    async def show(queue):
+        global proxies
+        with context(verbose=True, message='getting proxies in show'):
+            while True:
+                proxy = await queue.get()
+                if proxy is None:
+                    proxies.enable_limit()
+                    break
+                proxies.put(proxy)
+
+    def shutdown():
+        # loop.stop()
+        for task in asyncio.all_tasks():
+            task.cancel()
+
     while True:
         try:
-            proxy = await proxies.get()
-            if proxy is None:
-                log.info('Proxy search complete found: %s' % len(proxies2))
-                break
-            # log.info('Found proxy: %s (%s)' % (proxy, self.proxies.qsize()))
-            proxy._runtimes = proxy._runtimes[:1]
-            proxies2.append(proxy)
-        except:
-            traceback.print_exc()
+            with closing(asyncio.new_event_loop()) as loop:
+                asyncio.set_event_loop(loop)
+                loop.add_signal_handler(SIGINT, shutdown)
+                loop.add_signal_handler(SIGTERM, shutdown)
 
-lock = Lock()
-TRIES = 3
-THREADS = 100
-name = 'results_{}'.format(datetime.now().strftime('%y_%m_%d__%H_%M_%S'))
+                queue = asyncio.Queue()
+                broker = proxybroker.Broker(queue)
+                #random.seed()
+                #random.shuffle(broker._providers)
+                tasks = asyncio.gather(broker.find(types=[('HTTP', ('Anonymous', 'High'))],
+                                                   limit=300,
+                                                   check=True),
+                                       show(queue))
+                loop.run_until_complete(tasks)
+                broker.show_stats(verbose=True)
+                loop.stop()
+                time.sleep(3)
+        except asyncio.exceptions.CancelledError:
+            return
+        except Exception:
+            log.exception('Exception while finding proxies')
 
 
-for i in range(30):
-    with closing(asyncio.new_event_loop()) as loop:
-        asyncio.set_event_loop(loop)
+from bottle import route, run, response, ServerAdapter, Bottle
 
-        queue = asyncio.Queue()
-        broker = proxybroker.Broker(queue)
-        #random.seed()
-        #random.shuffle(broker._providers)
-        tasks = asyncio.gather(broker.find(types=[('HTTP', ('Anonymous', 'High'))],
-                                           limit=100,
-                                           # data=[('189.127.106.16', '53897')],
-                                           check=True),
-                               show(queue))
-        loop.run_until_complete(tasks)
-        broker.show_stats(verbose=True)
-        with open(name, 'a') as fp:
-            for proxy in proxies2:
-                fp.write('{}\n'.format(proxy))
-            fp.write('\n')
-            fp.flush()
 
-        loop.stop()
-        time.sleep(3600)
-print('Finish')
+class MyWSGIRefServer(ServerAdapter):
+    server = None
+
+    def run(self, handler):
+        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        if self.quiet:
+            class QuietHandler(WSGIRequestHandler):
+                def log_request(*args, **kw): pass
+            self.options['handler_class'] = QuietHandler
+        self.server = make_server(self.host, self.port, handler, **self.options)
+        self.server.serve_forever()
+
+    def stop(self):
+        # self.server.server_close() <--- alternative but causes bad fd exception
+        self.server.shutdown()
+
+@route('/proxies')
+def hello():
+    global proxies
+    response.headers['Content-Type'] = 'application/json'
+    return json.dumps([dict(host=p.host, port=p.port, provider=p.provider, type=p.types) for p in proxies.all()])
+
+
+log.info('Started')
+
+app = Bottle()
+server = MyWSGIRefServer(host='localhost', port=8080)
+
+t = threading.Thread(target=lambda: app.run(server=server))
+t.start()
+collect()
+server.stop()
+t.join()
+log.info('Finished')
