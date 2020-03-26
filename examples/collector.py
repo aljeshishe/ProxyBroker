@@ -140,7 +140,7 @@ def collect():
                 loop.run_until_complete(tasks)
                 broker.show_stats(verbose=True)
                 loop.stop()
-                time.sleep(3)
+                time.sleep(10*60)
         except asyncio.exceptions.CancelledError:
             return
         except Exception:
