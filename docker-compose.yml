@@ -1,0 +1,11 @@
+version: '2.1'
+services:
+    proxy_crawler:
+        image: python:3.8
+        command: bash -c "cd /app && pip install -e . && cd examples && python collector.py"
+        restart: always
+        # depends_on:
+        volumes:
+            - .:/app
+        ports:
+            - "38080:38080"
