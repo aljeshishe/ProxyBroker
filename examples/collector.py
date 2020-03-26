@@ -165,8 +165,9 @@ class MyWSGIRefServer(ServerAdapter):
     def stop(self):
         # self.server.server_close() <--- alternative but causes bad fd exception
         self.server.shutdown()
+app = Bottle()
 
-@route('/proxies')
+@app.route('/proxies')
 def hello():
     global proxies
     response.headers['Content-Type'] = 'application/json'
@@ -175,8 +176,7 @@ def hello():
 
 log.info('Started')
 
-app = Bottle()
-server = MyWSGIRefServer(host='localhost', port=8080)
+server = MyWSGIRefServer(host='localhost', port=38080)
 
 t = threading.Thread(target=lambda: app.run(server=server))
 t.start()
