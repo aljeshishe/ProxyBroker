@@ -45,7 +45,7 @@ log_config = {
     'loggers': {
         'proxybroker': {
             'handlers': ['file_handler'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
         'proxied_requests': {
