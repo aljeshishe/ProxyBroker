@@ -28,7 +28,7 @@ class Resolver:
     """Async host resolver based on aiodns."""
 
     _cached_hosts = {}
-    _ip_hosts = [
+    _IP_HOSTS = [
         'https://wtfismyip.com/text',
         'http://api.ipify.org/',
         'http://ipinfo.io/ip',
@@ -41,6 +41,7 @@ class Resolver:
     def __init__(self, timeout=5):
         self._timeout = timeout
         self._resolver = aiodns.DNSResolver()
+        self._ip_hosts = self._IP_HOSTS[:]
 
     @staticmethod
     def host_is_ip(host):
