@@ -167,7 +167,7 @@ class MyWSGIRefServer(ServerAdapter):
         self.server.shutdown()
 app = Bottle()
 
-@app.route('/proxies')
+@app.route('/')
 def hello():
     global proxies
     response.headers['Content-Type'] = 'application/json'
@@ -176,7 +176,7 @@ def hello():
 
 log.info('Started')
 
-server = MyWSGIRefServer(host='0.0.0.0', port=38080)
+server = MyWSGIRefServer(host='0.0.0.0', port=8080)
 
 t = threading.Thread(target=lambda: app.run(server=server))
 t.start()
