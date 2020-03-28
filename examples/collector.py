@@ -13,7 +13,7 @@ from datetime import datetime
 from queue import Queue
 from threading import Thread, Lock
 import logging.config
-
+import logging.handlers
 
 import proxybroker
 import logging
@@ -30,8 +30,10 @@ log_config = {
     'handlers': {
         'file_handler': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/proxybroker_%s.log' % datetime.now().strftime("%d%m%y_%H%M%S"),
+            'maxBytes': 1024*1024*200,
+            'backupCount': 5,
             'formatter': 'verbose',
             'mode': 'w',
             'encoding': 'utf8',
@@ -45,17 +47,7 @@ log_config = {
     'loggers': {
         'proxybroker': {
             'handlers': ['file_handler'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'proxied_requests': {
-            'handlers': ['file_handler'],
             'level': 'DEBUG',
-            'propagate': False,
-        },
-        'requests': {
-            'handlers': ['file_handler', 'console_handler'],
-            'level': 'INFO',
             'propagate': False,
         },
         'chardet': {
@@ -133,7 +125,7 @@ def collect():
                 broker = proxybroker.Broker(queue)
                 #random.seed()
                 #random.shuffle(broker._providers)
-                tasks = asyncio.gather(broker.find(types=[('HTTP', ('Anonymous', 'High'))],
+                tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
                                                    limit=0,
                                                    check=True),
                                        show(queue))
