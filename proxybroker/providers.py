@@ -552,34 +552,34 @@ def get_providers():
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 300
     Provider(url='https://us-proxy.org/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
-    # Provider(url='http://fineproxy.org/eng/fresh-proxies/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 5500
-    # Provider(url='https://socks-proxy.net/',
-    #          proto=('SOCKS4', 'SOCKS5')),                           # 80
-    # Provider(url='http://www.httptunnel.ge/ProxyListForFree.aspx',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
-    # Provider(url='http://cn-proxy.com/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 70
-    # Provider(url='http://pubproxy.com/api/proxy?limit=20&format=txt',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 20
-    # Xseo_in(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 240
-    # Spys_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 660
-    # Foxtools_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'), max_conn=1),  # noqa; 500
-    # Tools_rosinstrument_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # noqa; 4000
-    # Tools_rosinstrument_com_socks(proto=('SOCKS4', 'SOCKS5')),                     # noqa; 1800
-    # My_proxy_com(max_conn=2),                                                      # noqa; 1000
-    # Checkerproxy_net(),                                                            # noqa; 60000
-    # Aliveproxy_com(),                                                              # noqa; 210
-    # Freeproxylists_com(),                                                          # noqa; 1338
-    # Webanetlabs_net(),                                                             # noqa; 5000
-    # Nntime_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),               # noqa; 1050
-    # Blogspot_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 24800
-    # Blogspot_com_socks(proto=('SOCKS4', 'SOCKS5')),                                # noqa; 1486
-    # Gatherproxy_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),          # noqa; 3212
-    # Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),                             # noqa; 30
-    # Proxylist_me(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 2872
-    # Proxylistplus_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),        # noqa; 450
-    # Proxy_list_org(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),           # noqa; 140
+    Provider(url='http://fineproxy.org/eng/fresh-proxies/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 5500
+    Provider(url='https://socks-proxy.net/',
+             proto=('SOCKS4', 'SOCKS5')),                           # 80
+    Provider(url='http://www.httptunnel.ge/ProxyListForFree.aspx',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
+    Provider(url='http://cn-proxy.com/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 70
+    Provider(url='http://pubproxy.com/api/proxy?limit=20&format=txt',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 20
+    Xseo_in(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 240
+    Spys_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 660
+    Foxtools_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'), max_conn=1),  # noqa; 500
+    Tools_rosinstrument_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # noqa; 4000
+    Tools_rosinstrument_com_socks(proto=('SOCKS4', 'SOCKS5')),                     # noqa; 1800
+    My_proxy_com(max_conn=2),                                                      # noqa; 1000
+    Checkerproxy_net(),                                                            # noqa; 60000
+    Aliveproxy_com(),                                                              # noqa; 210
+    Freeproxylists_com(),                                                          # noqa; 1338
+    Webanetlabs_net(),                                                             # noqa; 5000
+    Nntime_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),               # noqa; 1050
+    Blogspot_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 24800
+    Blogspot_com_socks(proto=('SOCKS4', 'SOCKS5')),                                # noqa; 1486
+    Gatherproxy_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),          # noqa; 3212
+    Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),                             # noqa; 30
+    Proxylist_me(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 2872
+    Proxylistplus_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),        # noqa; 450
+    Proxy_list_org(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),           # noqa; 140
     # Bad...
     # Provider(url='https://hugeproxies.com/home/',
     #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 800
