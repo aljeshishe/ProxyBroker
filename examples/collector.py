@@ -107,7 +107,7 @@ def collect():
 
             queue = asyncio.Queue()
             broker = proxybroker.Broker(queue)
-            broker._providers = broker._providers[:2]
+            broker._providers = broker._providers[:5]
             #random.seed()
             #random.shuffle(broker._providers)
             tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
