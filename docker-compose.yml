@@ -20,16 +20,6 @@ services:
             timeout: 30s
             retries: 3
 
-
-    jupyter:
-        image: jupyter/pyspark-notebook
-        command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --port 8888
-        restart: always
-        volumes:
-            - .:/home/jovyan/work
-        ports:
-            - 8888:8888
-
     web:
         image: python:3.8
         command: bash -c "cd /app && pip install -e . && cd examples && python serv.py"
