@@ -1,11 +1,40 @@
 version: '2.1'
 services:
-    crawler:
-        image: python:3.8
-        command: bash -c "cd /app && pip install -e . && cd examples && python collector.py"
+    airflow:
+        image: aljeshishe/airflow
         restart: always
         # depends_on:
+        environment:
+            - LOAD_EX=n
         volumes:
             - .:/app
-        #ports:
-        #    - "38080:38080"
+            - ./dags:/usr/local/airflow/dags
+            # Uncomment to include custom plugins
+            # - ./plugins:/usr/local/airflow/plugins
+        ports:
+            - 8080:8080
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+
+    jupyter:
+        image: jupyter/pyspark-notebook
+        command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --port 8888
+        restart: always
+        volumes:
+            - .:/home/jovyan/work
+        ports:
+            - 8888:8888
+
+    web:
+        image: python:3.8
+        command: bash -c "cd /app && pip install -e . && cd examples && python serv.py"
+        restart: always
+        volumes:
+            - .:/app
+        ports:
+            - 55555:55555
