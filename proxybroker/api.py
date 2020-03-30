@@ -391,7 +391,7 @@ class Broker:
         num_working_proxies = len([p for p in found_proxies if p.is_working])
 
         if not found_proxies:
-            print('Proxy not found')
+            log.info('Proxy not found')
             return
 
         errors = Counter()
@@ -429,19 +429,21 @@ class Broker:
                     for event, runtime in events:
                             full_log.append('\t\t{:<66} Runtime: {:.2f}'.format(event, runtime))
                 for row in full_log:
-                    print(row)
+                    log.info(row)
             elif 'Connection: failed' in msgs:
                 stat['Connection failed'].append(p)
             else:
                 stat['Connection timeout'].append(p)
         if verbose:
-            print('Stats:')
-            pprint(stat)
+            log.info('Stats:')
+            stream = io.StringIO()
+            pprint(stat, stream)
+            log.info(stream.read())
 
-        print('The number of working proxies: %d' % num_working_proxies)
+        log.info('The number of working proxies: %d' % num_working_proxies)
         for proto, proxies in proxies_by_type.items():
-            print('%s (%s): %s' % (proto, len(proxies), proxies))
-        print('Errors:', errors)
+            log.info('%s (%s): %s' % (proto, len(proxies), proxies))
+        log.info('Errors:', errors)
 
 
 def _update_types(types):
