@@ -11,8 +11,6 @@ services:
             - ./dags:/usr/local/airflow/dags
             # Uncomment to include custom plugins
             # - ./plugins:/usr/local/airflow/plugins
-        ports:
-            - 8080:8080
         command: webserver
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
@@ -26,5 +24,3 @@ services:
         restart: always
         volumes:
             - .:/app
-        ports:
-            - 55555:55555

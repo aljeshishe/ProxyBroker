@@ -61,5 +61,5 @@ logging.config.dictConfig(log_config)
 log = logging.getLogger(__name__)
 
 log.info('Started')
-run(host='0.0.0.0', port=55555, debug=True)
+run(host='0.0.0.0', port=8080, debug=True)
 log.info('Finished')
