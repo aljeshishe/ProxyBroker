@@ -85,12 +85,14 @@ def collect():
         with context(verbose=True, message='getting proxies in show'):
             temp_file_name = 'data.json.tmp'
             file_name = 'data.json'
-            with open(temp_file_name, 'w') as fp:
+            with open(temp_file_name, 'w') as tmp_fp, open(file_name, 'a') as fp:
                 while True:
                     proxy = await queue.get()
                     if proxy is None:
                         break
-                    fp.write(f'{json.dumps(proxy.as_json())}\n')
+                    data = json.dumps(proxy.as_json())
+                    tmp_fp.write(f'{data}\n')
+                    fp.write(f'{data}\n')
             log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
             os.rename(temp_file_name, file_name)
 
