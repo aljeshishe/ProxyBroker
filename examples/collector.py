@@ -85,13 +85,13 @@ def context(verbose=True, message='', **kwargs):
 
 queue = asyncio.Queue()
 broker = proxybroker.Broker(queue, max_conn=1000)
+temp_file_name = 'data.json.tmp'
+file_name = 'data.json'
 
 
 def collect():
     async def show(queue):
         with context(verbose=True, message='getting proxies in show'):
-            temp_file_name = 'data.json.tmp'
-            file_name = 'data.json'
             async with AIOFile(temp_file_name, 'w') as tmp_f, AIOFile(file_name, 'a') as f:
                 tmp_fp_eriter = Writer(tmp_f)
                 fp_writer = Writer(f)
@@ -104,8 +104,6 @@ def collect():
                     await tmp_f.fsync()
                     await fp_writer(f'{data}\n')
                     await f.fsync()
-            log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
-            os.rename(temp_file_name, file_name)
 
     broker._providers = broker._providers[:2]
     loop = asyncio.get_event_loop()
@@ -117,6 +115,8 @@ def collect():
     with suppress(CancelledError):
         loop.run_until_complete(tasks)
 
+    log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
+    os.rename(temp_file_name, file_name)
 
 if __name__ == '__main__':
     # from dowser.utils import launch_memory_usage_server
