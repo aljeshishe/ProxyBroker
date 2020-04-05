@@ -228,10 +228,8 @@ async def _send_test_request(method, proxy, judge):
         err = BadResponseError
         raise err
     finally:
-        proxy.log('Send test request: %s' % ('success' if content else 'failed'), err=err)
-        log.debug('{h}:{p} [{n}]: ({j}) rv: {rv}'.format(
-            h=proxy.host, p=proxy.port, n=proxy.ngtr.name, j=judge.url,
-            rv=rv))
+        result = ('success' if content else 'failed')
+        proxy.log(f'Send test request [{proxy.ngtr.name}]: ({judge.url}) rv: {rv}: {result}', err=err)
     return headers, content, rv
 
 
