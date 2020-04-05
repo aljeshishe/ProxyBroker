@@ -565,8 +565,6 @@ def get_providers():
     Xseo_in(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 240
     Spys_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 660
     Foxtools_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'), max_conn=1),  # noqa; 500
-    Tools_rosinstrument_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # noqa; 4000
-    Tools_rosinstrument_com_socks(proto=('SOCKS4', 'SOCKS5')),                     # noqa; 1800
     My_proxy_com(max_conn=2),                                                      # noqa; 1000
     Checkerproxy_net(),                                                            # noqa; 60000
     Aliveproxy_com(),                                                              # noqa; 210
@@ -578,37 +576,22 @@ def get_providers():
     Gatherproxy_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),          # noqa; 3212
     Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),                             # noqa; 30
     Proxylist_me(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 2872
-    Proxylistplus_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),        # noqa; 450
     Proxy_list_org(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),           # noqa; 140
-    # Bad...
-    # Provider(url='https://hugeproxies.com/home/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 800
-    # Provider(url='http://proxy.rufey.ru/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 153
-    # Maxiproxies_com(),                                                             # noqa; 430
-    # Provider(url='https://geekelectronics.org/my-servisy/proxy',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 400
-    # Provider(url='http://proxytime.ru/http',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 1400
-    # http://www.proxylist.ro/
-    # Provider(url='http://proxydb.net/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS',
-    #                'CONNECT:25', 'SOCKS4', 'SOCKS5')),
-    # Provider(url='http://www.cybersyndrome.net/pla6.html',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 1100
-    # Provider(url='https://www.ip-adress.com/proxy-list',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 57
-    # Provider(url='https://www.marcosbl.com/lab/proxies/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 89
-    # Provider(url='http://go4free.xyz/Free-Proxy/',
-    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 196
-    # Provider(url='http://blackstarsecurity.com/proxy-list.txt'),  # 7014
-    # Provider(url='http://www.get-proxy.net/proxy-archives'),  # 519
-    # Proxyb_net(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')), # 857
-    # Proxz_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'),
-    #           max_conn=2), # 443
-    # Proxynova_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')), # 818
-    # _50kproxies_com(),  # 822
+    Provider(url='http://proxytime.ru/http',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 1400
+    Provider(url='http://proxydb.net/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25', 'SOCKS4', 'SOCKS5')),
+    Provider(url='http://www.cybersyndrome.net/pla6.html',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 1100
+    Provider(url='https://www.ip-adress.com/proxy-list',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 57
+    Provider(url='https://www.marcosbl.com/lab/proxies/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 89
+    Proxz_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'),
+              max_conn=2), # 443
+    Proxynova_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')), # 818
+    # bad
+    # Proxylistplus_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),        # noqa; 450
     # Free_proxy_cz(),  # 420
     ]
     return PROVIDERS
