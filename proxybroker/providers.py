@@ -58,8 +58,7 @@ class Provider:
         async with aiohttp.ClientSession(headers=get_headers(),
                                          cookies=self._cookies) as self._session:
             async for proxies in self._pipe():
-                with suppress(Exception):
-                    yield [(*p, str(self)) for p in proxies]
+                yield [(*p, str(self)) for p in proxies]
         log.info(f'{self} finished crawling proxies')
 
     async def _pipe(self):
@@ -241,19 +240,21 @@ class Gatherproxy_com(Provider):
 
     async def _pipe(self):
         # TODO works incorrectly
-        url = 'https://proxygather.com/proxylist/anonymity/?t=Elite'
         expNumPages = r'href="#(\d+)"'
         method = 'POST'
-        # hdrs = {'Content-Type': 'application/x-www-form-urlencoded'}
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         urls = []
-        for t in ['anonymous', 'elite']:
+        for t in ['Anonymous', 'Elite']:
+            url = f'https://proxygather.com/proxylist/anonymity/?t={t}'
             data = {'Type': t, 'PageIdx': 1}
-            page = await self.get(url, data=data, method=method)
+            page = await self.get(url, data=data, method=method, headers=headers)
             if not page:
                 continue
-            lastPageId = max([int(n) for n in re.findall(expNumPages, page)])
-            for pid in range(1, lastPageId + 1):
-                yield await self._find_on_page(url=url, data={'Type': t, 'PageIdx': pid}, method=method)
+            pages = [int(n) for n in re.findall(expNumPages, page)]
+            if not pages:
+                continue
+            for pid in [1] + pages:
+                yield await self._find_on_page(url=url, data={'Type': t, 'PageIdx': pid}, method=method, headers=headers)
         # urls.append({'url': 'http://www.gatherproxy.com/sockslist/',
         #              'method': method})
 
