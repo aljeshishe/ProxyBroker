@@ -57,7 +57,7 @@ class Broker:
         self._timeout = timeout
         self._verify_ssl = verify_ssl
 
-        self.unique_proxies = {}
+        self.unique_proxies = set()
         self._all_tasks = []
         self._checker = None
         self._server = None
@@ -85,7 +85,8 @@ class Broker:
         self._judges = judges
         self._providers = [p if isinstance(p, Provider) else Provider(p)
                            for p in (providers or get_providers())]
-
+        self._to_check = 0
+        self._ok_proxies = 0
         # try:
         #     self._loop.add_signal_handler(signal.SIGINT, self.stop)
         #     # add_signal_handler() is not implemented on Win
@@ -194,6 +195,7 @@ class Broker:
                 combine = aiostream.stream.merge(*generators)
                 async with combine.stream() as streamer:
                     async for proxies in streamer:
+                        self._to_check += len(proxies)
                         for proxy in proxies:
                             await self._handle(proxy, check=check)
                             if self._stopped:
@@ -226,11 +228,11 @@ class Broker:
             log.exception(f'Exception while checking proxy {proxy}')
 
     def _is_unique(self, proxy):
-        if (proxy.host, proxy.port) in self.unique_proxies:
+        if proxy.host_port in self.unique_proxies:
             proxy.log('Proxy already processed(possibly from other provider)')
             return False
 
-        self.unique_proxies[(proxy.host, proxy.port)] = proxy
+        self.unique_proxies.add(proxy.host_port)
         return True
 
     def _geo_passed(self, proxy):
@@ -242,6 +244,7 @@ class Broker:
 
     async def _push_to_check(self, proxy):
         def _task_done(proxy, f):
+            self._to_check -= 1
             self._on_check.task_done()
             if not self._on_check.empty():
                 self._on_check.get_nowait()
@@ -264,7 +267,9 @@ class Broker:
         self._all_tasks.append(task)
 
     def _push_to_result(self, proxy):
-        log.debug('push to result: %r' % proxy)
+        self._ok_proxies += 1
+        log.info(f'_on_check:{self._on_check.qsize()}  _to_check:{self._to_check} unique:{len(self.unique_proxies)} '
+                 f'ok:{self._ok_proxies} Found proxy {proxy} ')
         self._proxies.put_nowait(proxy)
         self._update_limit()
 
@@ -289,7 +294,7 @@ class Broker:
                 task.cancel()
         self._push_to_result(None)
         self._stopped = True
-        log.info('Done! Total found proxies: %d' % len(self.unique_proxies))
+        log.info('Finished!')
 
     def show_stats(self, verbose=False, **kwargs):
         """Show statistics on the found proxies.
@@ -306,7 +311,7 @@ class Broker:
             warnings.warn('`full` in `show_stats` is deprecated, '
                           'use `verbose` instead.', DeprecationWarning)
 
-        found_proxies = self.unique_proxies.values()
+        # found_proxies = self.unique_proxies.values() # TODO unique_proxies is set now
         num_working_proxies = len([p for p in found_proxies if p.is_working])
 
         if not found_proxies:
