@@ -107,13 +107,15 @@ def collect():
 
     # broker._providers = broker._providers[:2]
     loop = asyncio.get_event_loop()
-    loop.set_debug(True)
+    # loop.set_debug(True)
     tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
                                        limit=0,
                                        check=True),
                            show(queue))
-    with suppress(CancelledError):
+    try:
         loop.run_until_complete(tasks)
+    except:
+        log.exception('Exception during ')
 
     log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
     os.rename(temp_file_name, file_name)
