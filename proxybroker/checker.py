@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import time
 import zlib
 import warnings
@@ -150,53 +151,48 @@ class Checker:
         judges = Judge.get_random(proto)
         # proxy.log('Selected judges: %s' % judges)
         result = False
-        for attempt in range(self._max_tries):
-            for judge in judges:
-                try:
-                    proxy.ngtr = proto
-                    await proxy.connect()
-                    await proxy.ngtr.negotiate(host=judge.host, ip=judge.ip)
-                except ProxyTimeoutError:
-                    continue
-                except (ProxyConnError, ProxyRecvError, ProxySendError,
-                        ProxyEmptyResponseError, BadStatusError, BadResponseError):
-                    return result
-                else:
-                    proxy.types[proxy.ngtr.name] = None
-                    result = True
-                    return result
-                finally:
-                    proxy.close()
+        for judge in itertools.islice(itertools.cycle(judges), 0, self._max_tries):
+            try:
+                proxy.ngtr = proto
+                await proxy.connect()
+                await proxy.ngtr.negotiate(host=judge.host, ip=judge.ip)
+            except ProxyTimeoutError:
+                continue
+            except (ProxyConnError, ProxyRecvError, ProxySendError,
+                    ProxyEmptyResponseError, BadStatusError, BadResponseError):
+                return result
+            else:
+                proxy.types[proxy.ngtr.name] = None
+                result = True
+                return result
+            finally:
+                proxy.close()
 
     async def _check(self, proxy, proto):
         judges = Judge.get_random(proto)
-        # proxy.log('Selected judges: %s' % judges)
-        result = False
-        for attempt in range(self._max_tries):
-            for judge in judges:
-                try:
-                    proxy.ngtr = proto
-                    await proxy.connect()
-                    await proxy.ngtr.negotiate(host=judge.host, ip=judge.ip)
-                    headers, content, rv = await _send_test_request(self._method, proxy, judge)
-                    content = _decompress_content(headers, content)
-                    result = _check_test_response(proxy, headers, content, rv)
-                    if result:
-                        if proxy.ngtr.check_anon_lvl:
-                            lvl = _get_anonymity_lvl(self._real_ext_ip, proxy, judge, content)
-                        else:
-                            lvl = None
-                        proxy.types[proxy.ngtr.name] = lvl
-                        return result
-                except ProxyTimeoutError:
-                    continue
-                except (ProxyTimeoutError, ProxyConnError, ProxyRecvError, ProxySendError,
-                        ProxyEmptyResponseError, BadStatusError, BadResponseError):
-                    #
-                    continue
-                    # return result
-                finally:
-                    proxy.close()
+        for judge in itertools.islice(itertools.cycle(judges), 0, self._max_tries):
+            try:
+                proxy.ngtr = proto
+                await proxy.connect()
+                await proxy.ngtr.negotiate(host=judge.host, ip=judge.ip)
+                headers, content, rv = await _send_test_request(self._method, proxy, judge)
+                content = _decompress_content(headers, content)
+                if _check_test_response(proxy, headers, content, rv):
+                    if proxy.ngtr.check_anon_lvl:
+                        lvl = _get_anonymity_lvl(self._real_ext_ip, proxy, judge, content)
+                    else:
+                        lvl = None
+                    proxy.types[proxy.ngtr.name] = lvl
+                    return True
+            except ProxyTimeoutError:
+                continue
+            except (ProxyTimeoutError, ProxyConnError, ProxyRecvError, ProxySendError,
+                    ProxyEmptyResponseError, BadStatusError, BadResponseError):
+                #
+                continue
+                # return result
+            finally:
+                proxy.close()
         return False
 
 
