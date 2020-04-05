@@ -11,6 +11,8 @@ from datetime import datetime
 import logging.config
 import logging.handlers
 
+from aiofile import AIOFile, Writer
+
 import proxybroker
 import logging
 
@@ -85,14 +87,18 @@ def collect():
         with context(verbose=True, message='getting proxies in show'):
             temp_file_name = 'data.json.tmp'
             file_name = 'data.json'
-            with open(temp_file_name, 'w') as tmp_fp, open(file_name, 'a') as fp:
+            async with AIOFile(temp_file_name, 'w') as tmp_f, AIOFile(file_name, 'a') as f:
+                tmp_fp_eriter = Writer(tmp_f)
+                fp_writer = Writer(f)
                 while True:
                     proxy = await queue.get()
                     if proxy is None:
                         break
                     data = json.dumps(proxy.as_json())
-                    tmp_fp.write(f'{data}\n')
-                    fp.write(f'{data}\n')
+                    await tmp_fp_eriter(f'{data}\n')
+                    await tmp_f.fsync()
+                    await fp_writer(f'{data}\n')
+                    await f.fsync()
             log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
             os.rename(temp_file_name, file_name)
 
