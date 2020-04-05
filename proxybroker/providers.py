@@ -73,7 +73,8 @@ class Provider:
             received = self.find_proxies(page)
         except Exception as e:
             log.exception(f'Error getting proxies from {url}: {e}')
-        log.debug(f'{self} {len(received)} proxies received from {url}: {received}')
+        log.info(f'{self} {len(received)} proxies received from {url}')
+        log.debug(f'{self} Proxies: {received}')
         return received
 
     async def get(self, url, data=None, headers=None, method='GET'):
