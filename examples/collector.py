@@ -82,6 +82,10 @@ def context(verbose=True, message='', **kwargs):
         log.exception(f'Exception while {message} {kwargs_str}')
 
 
+queue = asyncio.Queue()
+broker = proxybroker.Broker(queue, max_conn=1000)
+
+
 def collect():
     async def show(queue):
         with context(verbose=True, message='getting proxies in show'):
@@ -102,33 +106,18 @@ def collect():
             log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
             os.rename(temp_file_name, file_name)
 
-    def shutdown():
-        # loop.stop()
-        for task in asyncio.all_tasks():
-            task.cancel()
+    # broker._providers = broker._providers[:2]
+    loop = asyncio.get_event_loop()
+    loop.set_debug(True)
+    tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
+                                       limit=0,
+                                       check=True),
+                           show(queue))
+    loop.run_until_complete(tasks)
 
-    try:
-        with closing(asyncio.new_event_loop()) as loop:
-            asyncio.set_event_loop(loop)
-            loop.add_signal_handler(SIGINT, shutdown)
-            loop.add_signal_handler(SIGTERM, shutdown)
-
-            queue = asyncio.Queue()
-            broker = proxybroker.Broker(queue)
-            # broker._providers = broker._providers[:5]
-            #random.seed()
-            #random.shuffle(broker._providers)
-            tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
-                                               limit=0,
-                                               check=True),
-                                   show(queue))
-            loop.run_until_complete(tasks)
-            broker.show_stats(verbose=True)
-            loop.stop()
-    except asyncio.exceptions.CancelledError:
-        return
-    except Exception:
-        log.exception('Exception while finding proxies')
 
 if __name__ == '__main__':
+    # from dowser.utils import launch_memory_usage_server
+    # launch_memory_usage_server()
+
     collect()
