@@ -1,8 +1,10 @@
+import json
 import time
 import asyncio
 import warnings
 import ssl as _ssl
 from collections import Counter
+from datetime import datetime
 
 from .errors import (
     ProxyEmptyResponseError, ProxyConnError, ProxyRecvError,
@@ -13,6 +15,8 @@ from .negotiators import NGTRS
 
 _HTTP_PROTOS = {'HTTP', 'CONNECT:80', 'SOCKS4', 'SOCKS5'}
 _HTTPS_PROTOS = {'HTTPS', 'SOCKS4', 'SOCKS5'}
+
+stats_fp = open('logs/stats_{}.json'.format(datetime.now().strftime('%y%m%d_%H%M%S')), 'a')
 
 
 class Proxy:
@@ -72,8 +76,7 @@ class Proxy:
         self.expected_types = set(types) & {'HTTP', 'HTTPS', 'CONNECT:80',
                                             'CONNECT:25', 'SOCKS4', 'SOCKS5'}
         self._timeout = timeout
-        self._ssl_context = (True if verify_ssl else
-                             _ssl._create_unverified_context())
+        self._ssl_context = (True if verify_ssl else _ssl._create_unverified_context())
         self._types = {}
         self._is_working = False
         self.stat = {'requests': 0, 'errors': Counter()}
@@ -99,6 +102,10 @@ class Proxy:
         requests = len(self._runtimes)
         return f'<Proxy geo:{self._geo.code} avg:{self.avg_resp_time:.2f}s err:{errors} ' \
                f'req:{requests} [{tpinfo}] {self.host}:{self.port} {self.provider}>'
+
+    @property
+    def host_port(self):
+        return f'{self.host}:{self.port}'
 
     @property
     def types(self):
@@ -232,6 +239,7 @@ class Proxy:
             'types': [],
             'avg_resp_time': self.avg_resp_time,
             'error_rate': self.error_rate,
+            'provider': self.provider,
         }
 
         order = lambda tp_lvl: (len(tp_lvl[0]), tp_lvl[0][-1])
@@ -246,14 +254,18 @@ class Proxy:
         if stime:
             runtime = time.time() - stime
             runtime_str = 'Runtime: {:.2f}'.format(runtime)
-        log.debug('{h}:{p} [{n}]: {msg}; {runtime}'.format(h=self.host, p=self.port, n=ngtr, msg=msg, runtime=runtime_str))
+        # log.debug('{h}:{p} [{n}]: {msg}; {runtime}'.format(h=self.host, p=self.port, n=ngtr, msg=msg, runtime=runtime_str))
         trunc = '...' if len(msg) > 58 else ''
         msg = '{msg:.60s}{trunc}'.format(msg=msg, trunc=trunc)
         self._log.append((ngtr, msg, runtime))
         if err:
-            self.stat['errors'][err] += 1
+            self.stat['errors'][str(err)] += 1
         if runtime and 'timeout' not in msg:
             self._runtimes.append(runtime)
+
+        data = json.dumps(dict(datetm=str(datetime.now()), proxy=self.host_port, runtime=f'{runtime:.2f}',
+                               msg=str(msg), err=str(err), provider=self.provider))
+        stats_fp.write(f'{data}\n')
 
     def get_log(self):
         """Proxy log.
@@ -324,7 +336,8 @@ class Proxy:
             err = ProxySendError(msg)
             raise err
         finally:
-            self.log('Request: %s%s' % (req, msg), err=err)
+            self.log('Request: ', err=err)
+            # self.log('Request: %s%s' % (req, msg), err=err)
 
     async def recv(self, length=0, head_only=False):
         resp, msg, err = b'', '', None
