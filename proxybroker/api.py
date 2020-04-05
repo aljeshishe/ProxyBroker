@@ -58,7 +58,6 @@ class Broker:
         self._verify_ssl = verify_ssl
 
         self.unique_proxies = set()
-        self._all_tasks = []
         self._checker = None
         self._server = None
         self._limit = 0  # not limited
@@ -111,7 +110,6 @@ class Broker:
     #     self._limit = limit
     #     types = _update_types(types)
     #     task = asyncio.ensure_future(self._grab(types=types, check=False))
-    #     self._all_tasks.append(task)
 
     async def find(self, *, types=None, data=None, countries=None,
                    post=False, strict=False, dnsbl=None, limit=0, check=True, **kwargs):
@@ -264,7 +262,6 @@ class Broker:
         await self._on_check.put(None)
         task = asyncio.ensure_future(self._checker.check(proxy))
         task.add_done_callback(partial(_task_done, proxy))
-        self._all_tasks.append(task)
 
     def _push_to_result(self, proxy):
         self._ok_proxies += 1
@@ -287,11 +284,8 @@ class Broker:
         log.info('Stop!')
 
     def _done(self):
-        log.debug('called done')
-        while self._all_tasks:
-            task = self._all_tasks.pop()
-            if not task.done():
-                task.cancel()
+        for task in asyncio.all_tasks():
+            task.cancel()
         self._push_to_result(None)
         self._stopped = True
         log.info('Finished!')
