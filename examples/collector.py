@@ -37,14 +37,14 @@ log_config = {
             'encoding': 'utf8',
         },
         'console_handler': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
     },
     'loggers': {
         'proxybroker': {
-            'handlers': ['file_handler'],
+            'handlers': ['file_handler', 'console_handler'],
             'level': 'DEBUG',
             'propagate': False,
         },
