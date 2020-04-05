@@ -5,3 +5,4 @@ maxminddb==1.5.2
 pycares==3.1.1
 aiostream==0.4.1
 bottle==0.12.18
+aiofile==1.5.2
