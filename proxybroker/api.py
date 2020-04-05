@@ -205,10 +205,11 @@ class Broker:
                     else:
                         break
             await self._on_check.join()
-            self._done()
         except Exception as e:
             log.exception('Exception while grabbing proxies')
-            raise
+        finally:
+            self._done()
+            # raise
 
     async def _handle(self, proxy, check=False):
         try:
@@ -284,6 +285,7 @@ class Broker:
         log.info('Stop!')
 
     def _done(self):
+        log.info('Cancelling all tasks')
         for task in asyncio.all_tasks():
             task.cancel()
         self._push_to_result(None)
