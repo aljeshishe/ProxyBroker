@@ -105,7 +105,7 @@ def collect():
                     await fp_writer(f'{data}\n')
                     await f.fsync()
 
-    broker._providers = broker._providers[:2]
+    # broker._providers = broker._providers[:2]
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
