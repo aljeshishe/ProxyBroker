@@ -6,7 +6,8 @@ import os
 import pathlib
 import time
 from _signal import SIGINT, SIGTERM
-from contextlib import closing, contextmanager
+from asyncio import CancelledError
+from contextlib import closing, contextmanager, suppress
 from datetime import datetime
 import logging.config
 import logging.handlers
@@ -106,14 +107,15 @@ def collect():
             log.info(f'Finished writing results. Renaming {temp_file_name} to {file_name}')
             os.rename(temp_file_name, file_name)
 
-    # broker._providers = broker._providers[:2]
+    broker._providers = broker._providers[:2]
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     tasks = asyncio.gather(broker.find(types=['HTTP', 'HTTPS'],  # [('HTTP', ('Anonymous', 'High'))]
                                        limit=0,
                                        check=True),
                            show(queue))
-    loop.run_until_complete(tasks)
+    with suppress(CancelledError):
+        loop.run_until_complete(tasks)
 
 
 if __name__ == '__main__':
