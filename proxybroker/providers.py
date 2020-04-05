@@ -78,28 +78,23 @@ class Provider:
         return received
 
     async def get(self, url, data=None, headers=None, method='GET'):
-        for _ in range(self._max_tries):
-            page = await self._get(url, data=data, headers=headers, method=method)
-            if page:
-                return page
-        return None
-
-    async def _get(self, url, data=None, headers=None, method='GET'):
-        page = ''
-        try:
-            async with self._sem_provider, async_timeout.timeout(self._timeout):
-                async with self._session.request(method, url, data=data, headers=headers) as resp:
-                    page = await resp.text()
-                    if resp.status != 200:
+        exception = None
+        for i in range(self._max_tries):
+            try:
+                async with self._sem_provider, async_timeout.timeout(self._timeout):
+                    async with self._session.request(method, url, data=data, headers=headers,
+                                                     timeout=self._timeout) as resp:
+                        if resp.status == 200:
+                            return await resp.text()
                         log.debug(f'{self} getting page from {url} returned {resp.status}\nheaders: {resp.headers}\n'
-                                  f'cookies: {resp.cookies}\npage: \n{page:.1000s}%.1000s')
+                                  f'cookies: {resp.cookies}')
                         raise BadStatusError('Status: %s' % resp.status)
-        except (UnicodeDecodeError, BadStatusError, asyncio.TimeoutError,
-                aiohttp.ClientOSError, aiohttp.ClientResponseError,
-                aiohttp.ServerDisconnectedError) as e:
-            page = ''
-            log.exception(f'{self} getting {url} page failed')
-        return page
+            except (UnicodeDecodeError, BadStatusError, asyncio.TimeoutError,
+                    aiohttp.ClientOSError, aiohttp.ClientResponseError,
+                    aiohttp.ServerDisconnectedError) as e:
+                exception = e
+                log.warning(f'{self} getting {url} page failed try:{i}')
+        raise exception
 
     def find_proxies(self, page):
         return self._pattern.findall(page)
