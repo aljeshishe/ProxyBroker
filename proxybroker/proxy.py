@@ -88,6 +88,7 @@ class Proxy:
         self._closed = True
         self._reader = {'conn': None, 'ssl': None}
         self._writer = {'conn': None, 'ssl': None}
+        self.log('New proxy')
 
     def __repr__(self):
         # <Proxy US 1.12 [HTTP: Anonymous, HTTPS] 10.0.0.1:8080>

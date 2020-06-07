@@ -205,12 +205,13 @@ class Proxylist_me(Provider):
 
     async def _pipe(self):
         exp = r'''href\s*=\s*['"][^'"]*/?page=(\d+)['"]'''
-        page = await self.get('https://proxylist.me/')
         # TODO uncomment
-        # lastId = max([int(n) for n in re.findall(exp, page)])
-        lastId = 10
+        # url = 'https://proxylist.me/'
+        url = 'https://proxylist.me/?avalibity=30'
+        page = await self.get(url)
+        lastId = max([int(n) for n in re.findall(exp, page)])
         for n in range(1, lastId):
-            yield await self._find_on_page(url='https://proxylist.me/?page=%d' % n)
+            yield await self._find_on_page(url=f'{url}&page={n}')
 
 
 class Foxtools_ru(Provider):
@@ -439,43 +440,43 @@ class Proxylistplus_com(Provider):
 
 def get_providers():
     PROVIDERS = [
-    Provider(url='http://www.proxylists.net/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 49
-    Provider(url='http://ipaddress.com/proxy-list/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 53
-    Provider(url='https://www.sslproxies.org/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 100
-    Provider(url='https://freshfreeproxylist.wordpress.com/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 50
+    Proxylist_me(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
+    Checkerproxy_net(),
     Provider(url='https://free-proxy-list.net/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 300
+    Webanetlabs_net(),
+    My_proxy_com(max_conn=2),
+    Freeproxylists_com(),
+    Aliveproxy_com(),
+    Spys_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
     Provider(url='https://us-proxy.org/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
+    Foxtools_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'), max_conn=1),
+    Provider(url='http://ipaddress.com/proxy-list/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 53
+    Provider(url='http://www.httptunnel.ge/ProxyListForFree.aspx',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
+    Provider(url='https://www.sslproxies.org/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 100
+    Provider(url='http://www.proxylists.net/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 49
+    Xseo_in(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
+    Provider(url='http://cn-proxy.com/',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 70
+    Nntime_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
+    Provider(url='http://pubproxy.com/api/proxy?limit=20&format=txt',
+             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 20
+
+
     Provider(url='http://fineproxy.org/eng/fresh-proxies/',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 5500
     Provider(url='https://socks-proxy.net/',
              proto=('SOCKS4', 'SOCKS5')),                           # 80
-    Provider(url='http://www.httptunnel.ge/ProxyListForFree.aspx',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 200
-    Provider(url='http://cn-proxy.com/',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 70
-    Provider(url='http://pubproxy.com/api/proxy?limit=20&format=txt',
-             proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 20
-    Xseo_in(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 240
-    Spys_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),                  # noqa; 660
-    Foxtools_ru(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25'), max_conn=1),  # noqa; 500
-    My_proxy_com(max_conn=2),                                                      # noqa; 1000
-    Checkerproxy_net(),                                                            # noqa; 60000
-    Aliveproxy_com(),                                                              # noqa; 210
-    Freeproxylists_com(),                                                          # noqa; 1338
-    Webanetlabs_net(),                                                             # noqa; 5000
-    Nntime_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),               # noqa; 1050
-    Blogspot_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 24800
-    Blogspot_com_socks(proto=('SOCKS4', 'SOCKS5')),                                # noqa; 1486
-    Gatherproxy_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),          # noqa; 3212
-    Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),                             # noqa; 30
-    Proxylist_me(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),             # noqa; 2872
-    Proxy_list_org(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),           # noqa; 140
+    Blogspot_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
+    Blogspot_com_socks(proto=('SOCKS4', 'SOCKS5')),
+    Gatherproxy_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
+    Gatherproxy_com_socks(proto=('SOCKS4', 'SOCKS5')),
+    Proxy_list_org(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),
     Provider(url='http://proxytime.ru/http',
              proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 1400
     Provider(url='http://proxydb.net/',
@@ -492,5 +493,59 @@ def get_providers():
     # bad
     # Proxylistplus_com(proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),        # noqa; 450
     # Free_proxy_cz(),  # 420
+    # Provider(url='https://freshfreeproxylist.wordpress.com/', # old 2016
+    #          proto=('HTTP', 'CONNECT:80', 'HTTPS', 'CONNECT:25')),  # 50
     ]
     return PROVIDERS
+# working proxies
+# +-----------------------------+-----+
+# |provider                     |count|
+# +-----------------------------+-----+
+# |Checkerproxy_net(b'')        |2723 |
+# |Provider(free-proxy-list.net)|234  |
+# |Provider(us-proxy.org)       |106  |
+# |Provider(www.sslproxies.org) |74   |
+# |My_proxy_com(b'')            |42   |
+# |Provider(www.httptunnel.ge)  |26   |
+# |Provider(ipaddress.com)      |23   |
+# |Provider(proxydb.net)        |20   |
+# |Proxynova_com(b'')           |18   |
+# |Gatherproxy_com(b'')         |13   |
+# |Provider(www.marcosbl.com)   |11   |
+# |Provider(proxytime.ru)       |9    |
+# |Foxtools_ru(b'')             |6    |
+# |Provider(cn-proxy.com)       |6    |
+# |Provider(pubproxy.com)       |6    |
+# |Provider(www.proxylists.net) |6    |
+# |Nntime_com(b'')              |5    |
+# |Freeproxylists_com(b'')      |4    |
+# |Proxy_list_org(b'')          |3    |
+# |Xseo_in(b'')                 |3    |
+# |Webanetlabs_net(b'')         |3    |
+# |Provider(www.ip-adress.com)  |2    |
+# |Proxylist_me(b'')            |2    |
+# +-----------------------------+-----+
+
+# total proxies
+# +------------------------------------------+-----+
+# |provider                                  |count|
+# +------------------------------------------+-----+
+# |Checkerproxy_net(b'')                     |21493|
+# |Freeproxylists_com(b'')                   |3159 |
+# |Webanetlabs_net(b'')                      |2560 |
+# |My_proxy_com(b'')                         |402  |
+# |Provider(free-proxy-list.net)             |300  |
+# |Aliveproxy_com(b'')                       |259  |
+# |Spys_ru(b'')                              |259  |
+# |Provider(us-proxy.org)                    |170  |
+# |Foxtools_ru(b'')                          |123  |
+# |Provider(ipaddress.com)                   |99   |
+# |Provider(www.httptunnel.ge)               |81   |
+# |Provider(www.sslproxies.org)              |48   |
+# |Provider(www.proxylists.net)              |47   |
+# |Xseo_in(b'')                              |42   |
+# |Provider(cn-proxy.com)                    |10   |
+# |Nntime_com(b'')                           |3    |
+# |Provider(pubproxy.com)                    |3    |
+# |Provider(freshfreeproxylist.wordpress.com)|1    |
+# +------------------------------------------+-----+
